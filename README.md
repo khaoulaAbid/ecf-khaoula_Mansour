@@ -150,37 +150,41 @@ sales_amount = quantity * price
 
 ## 📂 Structure réelle du projet
 
-```
 ecf_complet/
 │
-├── docker_compose.yml            # Infrastructure Docker
+├── docker_compose.yml                # Infrastructure Docker
 │
-├── architecture_data.png         # Diagramme global d’architecture
+├── docs/                             # Documentation du projet
+│   ├── architecture_data.png         # Diagramme global d’architecture
+│   ├── model_data.png                # Modèle de données (Star Schema)
+│   ├── dat.md                        # Dictionnaire / documentation des données
+│   └── rgpd_conformite.md            # Conformité RGPD
 │
 ├── config/
-│   └── settings.py               # Configuration centralisée
+│   └── settings.py                   # Configuration centralisée
 │
 ├── storage/
-│   └── minio_client.py           # Client MinIO
+│   └── minio_client.py               # Client MinIO (Data Lake – Bronze)
+│
+├── sql/                              # Requêtes SQL analytiques
+│   ├── analyses.sql                  # Analyses SQL PostgreSQL
+│   └── analysis_sql_pandas.sql       # Analyses SQL utilisées avec Pandas
 │
 ├── src/
-│   ├── pipeline.py               # Orchestrateur CLI (Bronze / Silver / Gold)
+│   ├── pipeline.py                   # Orchestrateur CLI (Bronze / Silver / Gold)
 │   │
-│   ├── ingestion/                # Couche Bronze – ingestion des données
-│   │   ├── scrape_books.py
-│   │   ├── scrape_quotes.py
-│   │   ├── scrape_api_geo.py
-│   │   └── import_excel.py
+│   ├── ingestion/                    # Couche Bronze – ingestion des données
+│   │   ├── scrape_books.py           # Web scraping livres
+│   │   ├── scrape_quotes.py          # Web scraping citations
+│   │   ├── scrape_api_geo.py         # Ingestion API REST
+│   │   └── import_excel.py           # Import fichiers Excel
 │   │
-│   └── transformation/           # Transformations Silver & Gold
-│       ├── bronze_to_silver.py
-│       ├── silver_to_gold.py
-│       └── sql/
-│           └── analyses.sql
+│   └── transformation/               # Transformations Silver & Gold
+│       ├── bronze_to_silver.py       # Nettoyage & normalisation
+│       └── silver_to_gold.py         # Modélisation analytique
 │
 └── .vscode/
-    └── settings.json
-```
+    └── settings.json                 # Configuration éditeur
 
 ---
 
