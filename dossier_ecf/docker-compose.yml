@@ -1,0 +1,90 @@
+version: "3.9"
+
+services:
+  # ============================================================================
+  # PostgreSQL – Data Warehouse (Bronze / Silver / Gold)
+  # ============================================================================
+  db:
+    image: postgres:15
+    container_name: postgres_datapulse
+    restart: always
+    environment:
+      POSTGRES_DB: datapulse
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    ports:
+      - "5440:5432"   # accès depuis ta machine (pgAdmin local si besoin)
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts:/docker-entrypoint-initdb.d
+    networks:
+      - datapulse_network
+
+  # ============================================================================
+  # MinIO – Object Storage (Bronze Layer)
+  # ============================================================================
+  minio:
+    image: minio/minio:latest
+    container_name: minio_bronze
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    ports:
+      - "9100:9000"   # API S3
+      - "9101:9001"   # Console Web
+    volumes:
+      - minio_data:/data
+    networks:
+      - datapulse_network
+
+  # ============================================================================
+  # pgAdmin – Interface Web PostgreSQL
+  # ============================================================================
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin_supershop
+    depends_on:
+      - db
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - datapulse_network
+
+
+  # ============================================================================
+  # ETL
+  # ============================================================================
+  etl:
+    image: python:3.11
+    container_name: datapulse_etl
+    working_dir: /app
+    volumes:
+      - ./:/app
+    depends_on:
+      - db
+      - minio
+    command: tail -f /dev/null
+    networks:
+      - datapulse_network
+     
+
+# ============================================================================
+# Volumes persistants
+# ============================================================================
+volumes:
+  postgres_data:
+  minio_data:
+  pgadmin_data:
+
+# ============================================================================
+# Réseau Docker
+# ============================================================================
+networks:
+  datapulse_network:
+    driver: bridge
