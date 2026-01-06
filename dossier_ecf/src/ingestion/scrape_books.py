@@ -2,9 +2,12 @@ import json
 import time
 import requests
 import psycopg2
+import io
+
 from bs4 import BeautifulSoup
 from utils.logger import get_logger
 from utils.minio_client import get_minio_client
+
 
 # ===============================================================================
 # DDL Script: Create Bronze books Table
@@ -47,10 +50,10 @@ def run():
         );
     """)
 
-    # minio_client = get_minio_client()
+    minio_client = get_minio_client()
 
-    # if not minio_client.bucket_exists(BUCKET):
-    #     minio_client.make_bucket(BUCKET)
+    if not minio_client.bucket_exists(BUCKET):
+        minio_client.make_bucket(BUCKET)
 
     books = []
 
@@ -101,13 +104,13 @@ def run():
     logger.info("Uploading books raw data to MinIO")
 
     data_bytes = json.dumps(books, indent=2).encode("utf-8")
+    data_stream = io.BytesIO(data_bytes)
 
-    # minio_client.put_object(
-    #     BUCKET,
-    #     "books/books_raw.json",
-    #     data=data_bytes,
-    #     length=len(data_bytes),
-    #     content_type="application/json"
-    # )
-
+    minio_client.put_object(
+        bucket_name=BUCKET,
+        object_name="books/books_raw.json",
+        data=data_stream,
+        length=len(data_bytes),
+        content_type="application/json"
+    )
     logger.info("SUCCESS Bronze books ingestion completed")

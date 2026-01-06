@@ -5,7 +5,7 @@ import psycopg2
 from bs4 import BeautifulSoup
 from utils.logger import get_logger
 from utils.minio_client import get_minio_client
-
+import io
 
 
 # ===============================================================================
@@ -49,10 +49,10 @@ def run():
         );
     """)
 
-    # minio = get_minio_client()
+    minio_client = get_minio_client()
 
-    # if not minio.bucket_exists(BUCKET):
-    #     minio.make_bucket(BUCKET)
+    if not minio_client.bucket_exists(BUCKET):
+        minio_client.make_bucket(BUCKET)
 
     quotes = []
     page = 1
@@ -110,14 +110,19 @@ def run():
 
     logger.info("Uploading quotes raw data to MinIO")
 
-    # data_bytes = json.dumps(quotes, indent=2, ensure_ascii=False).encode("utf-8")
 
-    # minio.put_object(
-    #     BUCKET,
-    #     "quotes/quotes_raw.json",
-    #     data=data_bytes,
-    #     length=len(data_bytes),
-    #     content_type="application/json"
-    # )
+    
+    logger.info("SUCCESS Bronze books ingestion completed")
 
+    data_bytes = json.dumps(quotes, indent=2).encode("utf-8")
+    data_stream = io.BytesIO(data_bytes)
+
+
+    minio_client.put_object(
+            bucket_name=BUCKET,
+            object_name="quotes/quotes_raw.json",
+            data=data_stream,
+            length=len(data_bytes),
+            content_type="application/json"
+        )
     logger.info("SUCCESS Bronze quotes ingestion completed")

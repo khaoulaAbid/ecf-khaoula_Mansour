@@ -4,6 +4,7 @@ import requests
 import psycopg2
 from utils.logger import get_logger
 from utils.minio_client import get_minio_client
+import io
 
 # ===============================================================================
 # Script Purpose:
@@ -103,15 +104,17 @@ def run():
 
     logger.info("Uploading geocoding raw data to MinIO")
 
-    # minio = get_minio_client()
-    # data_bytes = json.dumps(results, indent=2).encode("utf-8")
+    minio_client = get_minio_client()
+    
 
-    # minio.put_object(
-    #     BUCKET,
-    #     "geocoding/geocoding_raw.json",
-    #     data=data_bytes,
-    #     length=len(data_bytes),
-    #     content_type="application/json"
-    # )
+    data_bytes = json.dumps(results, indent=2).encode("utf-8")
+    data_stream = io.BytesIO(data_bytes)
 
+    minio_client.put_object(
+        bucket_name=BUCKET,
+        object_name="geocoding/geocoding_raw.json",
+        data=data_stream,
+        length=len(data_bytes),
+        content_type="application/json"
+    )
     logger.info("SUCCESS Bronze geocoding ingestion completed")

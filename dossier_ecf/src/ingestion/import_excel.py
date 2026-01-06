@@ -3,7 +3,7 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 from utils.logger import get_logger
 from utils.minio_client import get_minio_client
-
+import io
 
 
 # ===============================================================================
@@ -37,7 +37,7 @@ engine = create_engine(DB_URI)
 
 with engine.begin() as conn:
     conn.execute(text("CREATE SCHEMA IF NOT EXISTS bronze"))
-# BUCKET = "bronze"
+BUCKET = "bronze"
 EXCEL_PATH = "data/partenaire_librairies.xlsx"
 
 
@@ -69,19 +69,20 @@ def run():
     # Store raw data in MinIO
     logger.info("Uploading raw Excel data to MinIO")
 
-    # minio = get_minio_client()
+    minio_client = get_minio_client()
 
-    # if not minio.bucket_exists(BUCKET):
-    #     minio.make_bucket(BUCKET)
+    if not minio_client.bucket_exists(BUCKET):
+        minio_client.make_bucket(BUCKET)
 
-    # data_bytes = df.to_json(orient="records", indent=2).encode("utf-8")
+    data_bytes = df.to_json(orient="records", indent=2).encode("utf-8")
+    data_stream = io.BytesIO(data_bytes)
 
-    # minio.put_object(
-    #     BUCKET,
-    #     "librairies/librairies_raw.json",
-    #     data=data_bytes,
-    #     length=len(data_bytes),
-    #     content_type="application/json"
-    # )
+    minio_client.put_object(
+        bucket_name=BUCKET,
+        object_name="librairies/librairies_raw.json",
+        data=data_stream,
+        length=len(data_bytes),
+        content_type="application/json"
+    )
 
     logger.info("SUCCESS Bronze Excel ingestion completed")
